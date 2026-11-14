@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Tegneserie-dashboard</title>
 <style>
   :root {
@@ -305,5 +308,12 @@
 <footer>Denne fil bygges af <code>scripts/build_single.py</code> fra <code>template.html</code> + <code>comics-data.js</code> (genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>). Tilføjelser/ændringer gemmes lokalt i browseren — brug "Eksportér CSV" for at få dem med tilbage i Excel.</footer>
 <script src="comics-data.js"></script>
 <script src="app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js");
+    });
+  }
+</script>
 </body>
 </html>

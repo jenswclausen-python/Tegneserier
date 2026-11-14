@@ -55,6 +55,10 @@ check("overlay: sletning fjerner række", !eff3.some((r) => r.id === data[1].id)
 
 check("csv-eksport har header og rækker", D.tilCsv(eff1).split("\n").length === eff1.length + 1 && D.tilCsv(eff1).startsWith("id;titel;"));
 
+const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+check("index.html refererer comics-data.js og app.js (kræves af build_single.py)", html.includes('<script src="comics-data.js"></script>') && html.includes('<script src="app.js"></script>'));
+check("index.html har Søg-knap", html.includes('id="sog"'));
+
 if (failures) {
   console.error(failures + " test fejlede");
   process.exit(1);

@@ -361,6 +361,7 @@
     ["q", "f-serie", "f-forfatter", "f-forlag", "aar-fra", "aar-til"].forEach(function (id) {
       $(id).addEventListener("input", render);
     });
+    $("sog").addEventListener("click", render);
     $("kun-ulaest").addEventListener("change", render);
     $("kun-manglende").addEventListener("change", render);
     $("nulstil").addEventListener("click", function () {

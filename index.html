@@ -67,6 +67,8 @@
   }
   .felt input:focus, .felt select:focus { outline: 2px solid var(--accent-lys); border-color: var(--accent); }
   .felt-sog { grid-column: 1 / -1; }
+  .sog-raekke { display: flex; gap: 0.5rem; }
+  .sog-raekke input { flex: 1; }
   .check-felt { display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
   .check-felt label { font-size: 0.9rem; }
   .knap-raekke { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -170,7 +172,10 @@
   <section class="styring">
     <div class="felt felt-sog">
       <label for="q">Søg (titel, forfatter, serie, år, forlag, kommentar…)</label>
-      <input type="search" id="q" placeholder="F.eks. Asterix, Uderzo, 1989…" autofocus>
+      <div class="sog-raekke">
+        <input type="search" id="q" placeholder="F.eks. Asterix, Uderzo, 1989…" autofocus>
+        <button id="sog" type="button" class="primar">Søg</button>
+      </div>
     </div>
     <div class="felt">
       <label for="f-serie">Serie</label>

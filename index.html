@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tegneserie-dashboard</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --kort: #ffffff;
+    --kant: #d9dce1;
+    --tekst: #1d2129;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-lys: #eff4ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--tekst);
+  }
+  header {
+    background: var(--kort);
+    border-bottom: 1px solid var(--kant);
+    padding: 1.2rem 1.5rem;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; }
+  header p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem; }
+  main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+  .stat-kort {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .stat {
+    background: var(--kort);
+    border: 1px solid var(--kant);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+  }
+  .stat .vaerdi { font-size: 1.5rem; font-weight: 700; }
+  .stat .etiket { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .styring {
+    background: var(--kort);
+    border: 1px solid var(--kant);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    align-items: end;
+  }
+  .felt label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .felt input[type="search"], .felt input[type="text"], .felt input[type="number"], .felt select {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--kant);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #fff;
+    color: var(--tekst);
+  }
+  .felt input:focus, .felt select:focus { outline: 2px solid var(--accent-lys); border-color: var(--accent); }
+  .felt-sog { grid-column: 1 / -1; }
+  .check-felt { display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
+  .check-felt label { font-size: 0.9rem; }
+  button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--kant);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-lys); border-color: var(--accent); }
+  .tabel-wrap {
+    background: var(--kort);
+    border: 1px solid var(--kant);
+    border-radius: 10px;
+    overflow: auto;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--accent-lys);
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid var(--kant);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { background: #dce7ff; }
+  thead th .pil { color: var(--accent); display: inline-block; width: 1em; }
+  tbody td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--kant); vertical-align: top; }
+  tbody tr:nth-child(even) { background: #fafbfc; }
+  tbody tr:hover { background: var(--accent-lys); }
+  td.tal { text-align: right; white-space: nowrap; }
+  #antal { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.85rem; }
+  footer { padding: 1rem 1.5rem 2rem; color: var(--muted); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Tegneserie-dashboard</h1>
+  <p>Oversigt over din tegneseriesamling — søg og filtrer på titel, forfatter, serie, år, forlag og nummer.</p>
+</header>
+<main>
+  <section class="stat-kort">
+    <div class="stat"><div class="vaerdi" id="stat-album">–</div><div class="etiket">Album i alt</div></div>
+    <div class="stat"><div class="vaerdi" id="stat-serier">–</div><div class="etiket">Serier</div></div>
+    <div class="stat"><div class="vaerdi" id="stat-forfattere">–</div><div class="etiket">Forfattere</div></div>
+    <div class="stat"><div class="vaerdi" id="stat-aar">–</div><div class="etiket">Udgivelsesår</div></div>
+    <div class="stat"><div class="vaerdi" id="stat-ulaest">–</div><div class="etiket">Ikke læst</div></div>
+  </section>
+
+  <section class="styring">
+    <div class="felt felt-sog">
+      <label for="q">Søg (titel, forfatter, serie, år, forlag, kommentar…)</label>
+      <input type="search" id="q" placeholder="F.eks. Asterix, Uderzo, 1989…" autofocus>
+    </div>
+    <div class="felt">
+      <label for="f-serie">Serie</label>
+      <select id="f-serie"></select>
+    </div>
+    <div class="felt">
+      <label for="f-forfatter">Forfatter</label>
+      <select id="f-forfatter"></select>
+    </div>
+    <div class="felt">
+      <label for="f-forlag">Forlag</label>
+      <select id="f-forlag"></select>
+    </div>
+    <div class="felt">
+      <label for="aar-fra">År fra</label>
+      <input type="number" id="aar-fra" placeholder="f.eks. 1980" min="1800" max="2100">
+    </div>
+    <div class="felt">
+      <label for="aar-til">År til</label>
+      <input type="number" id="aar-til" placeholder="f.eks. 1999" min="1800" max="2100">
+    </div>
+    <div class="felt check-felt">
+      <input type="checkbox" id="kun-ulaest">
+      <label for="kun-ulaest">Kun ikke-læste</label>
+    </div>
+    <div class="felt">
+      <button id="nulstil" type="button">Nulstil filtre</button>
+    </div>
+  </section>
+
+  <section class="tabel-wrap">
+    <table id="tabel">
+      <thead>
+        <tr>
+          <th data-key="nummer">Nr. <span class="pil"></span></th>
+          <th data-key="titel">Titel <span class="pil"></span></th>
+          <th data-key="forfatter">Forfatter <span class="pil"></span></th>
+          <th data-key="serie">Serie <span class="pil"></span></th>
+          <th data-key="aar">År <span class="pil"></span></th>
+          <th data-key="forlag">Forlag <span class="pil"></span></th>
+          <th data-key="kommentar">Kommentar <span class="pil"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+  <p id="antal"></p>
+</main>
+<footer>Data læses fra <code>comics-data.js</code> — genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>. Åbn <code>index.html</code> direkte i browseren.</footer>
+<script src="comics-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

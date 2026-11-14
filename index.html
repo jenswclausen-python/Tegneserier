@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Tegneserie-dashboard</title>
 <style>
   :root {
@@ -725,6 +728,13 @@ window.TEGNESERIER = [{"titel": "Djævelens orgel", "forfatter": "", "serie": ""
   }
 })(typeof window !== "undefined" ? window : globalThis);
 
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js");
+    });
+  }
 </script>
 </body>
 </html>

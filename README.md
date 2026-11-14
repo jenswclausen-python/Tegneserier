@@ -29,6 +29,7 @@ Dashboardet kan også bruges til at tilføje, redigere og slette album direkte:
 - `Tegneserier oversigt 2.xlsx` — din oprindelige Excel-liste (source of truth)
 - `scripts/xlsx_to_data.py` — konverterer Excel til `comics-data.js`
 - `scripts/build_single.py` — bygger `index.html` fra `template.html` + data + kode
+- `manifest.webmanifest`, `sw.js`, `icon-192.png`, `icon-512.png` — gør siden til en installerbar webapp (PWA): på telefonen åbner du `https://jenswclausen-python.github.io/Tegneserier/` og vælger "Tilføj til hjemmeskærm"; appen virker også offline. Ikoner genereres med `scripts/make_icons.py` (kræver `pillow`)
 - `scripts/test_dashboard.js` — logik-tests (køres af CI)
 - `.github/workflows/dashboard-check.yml` — CI: tjekker at `comics-data.js` er i sync med Excel, syntakstjekker `app.js` og kører tests
 

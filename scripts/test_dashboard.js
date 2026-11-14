@@ -68,6 +68,12 @@ check("harAktivSoegning: kunManglende = true", D.harAktivSoegning({ ...base, kun
 check("harAktivSoegning: aarFra = true", D.harAktivSoegning({ ...base, aarFra: "1980" }) === true);
 check("harAktivSoegning: tom søgestreng = false", D.harAktivSoegning({ ...base, q: "   " }) === false);
 
+const man = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
+check("manifest: standalone med >=2 ikoner", man.display === "standalone" && man.icons.length >= 2);
+check("manifest-ikoner findes på disk", man.icons.every((i) => fs.existsSync(path.join(root, i.src))));
+check("sw.js findes", fs.existsSync(path.join(root, "sw.js")));
+check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker") && tpl.includes('register("sw.js")'));
+
 if (failures) {
   console.error(failures + " test fejlede");
   process.exit(1);

@@ -81,6 +81,12 @@
     };
   }
 
+  function harAktivSoegning(state) {
+    var aarFra = state.aarFra !== "" && state.aarFra !== null && state.aarFra !== undefined;
+    var aarTil = state.aarTil !== "" && state.aarTil !== null && state.aarTil !== undefined;
+    return !!(txt(state.q).trim() || state.serie || state.forfatter || state.forlag || aarFra || aarTil || state.kunUlaest || state.kunManglende);
+  }
+
   var OVERLAY_KEY = "tegneserier-overlay-v1";
 
   function tomtOverlay() {
@@ -131,7 +137,7 @@
     return head.join(";") + "\n" + rows.map(function (r) { return head.map(function (h) { return esc(r[h]); }).join(";"); }).join("\n");
   }
 
-  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, OVERLAY_KEY: OVERLAY_KEY };
+  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, OVERLAY_KEY: OVERLAY_KEY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.Dashboard = api;
 
@@ -202,6 +208,17 @@
     $("stat-mangler").textContent = s.mangler;
   }
 
+  function renderResultater(fundne) {
+    var tom = !harAktivSoegning(state);
+    var s = statistik(fundne);
+    $("res-album").textContent = tom ? "" : String(fundne.length);
+    $("res-serier").textContent = tom ? "" : String(s.serier);
+    $("res-forfattere").textContent = tom ? "" : String(s.forfattere);
+    $("res-aar").textContent = tom ? "" : s.aarMin === null ? "—" : s.aarMin + "–" + s.aarMax;
+    $("res-ulaest").textContent = tom ? "" : String(s.ikkeLaest);
+    $("res-mangler").textContent = tom ? "" : String(s.mangler);
+  }
+
   function renderTabel() {
     var fundne = sorter(filtrer(DATA, state), state.sortKey, state.sortDir);
     var tbody = $("tbody");
@@ -241,6 +258,7 @@
     });
     tbody.appendChild(frag);
     $("antal").textContent = "Viser " + fundne.length + " af " + DATA.length + " album";
+    renderResultater(fundne);
   }
 
   function render() {

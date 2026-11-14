@@ -61,6 +61,13 @@ const tpl = fs.readFileSync(path.join(root, "template.html"), "utf8");
 check("template.html refererer comics-data.js og app.js (kræves af build_single.py)", tpl.includes('<script src="comics-data.js"></script>') && tpl.includes('<script src="app.js"></script>'));
 check("template.html har Søg-knap", tpl.includes('id="sog"'));
 
+check("harAktivSoegning: tom tilstand = false", D.harAktivSoegning(base) === false);
+check("harAktivSoegning: søgetekst = true", D.harAktivSoegning({ ...base, q: "asterix" }) === true);
+check("harAktivSoegning: serie-filter = true", D.harAktivSoegning({ ...base, serie: "Asterix" }) === true);
+check("harAktivSoegning: kunManglende = true", D.harAktivSoegning({ ...base, kunManglende: true }) === true);
+check("harAktivSoegning: aarFra = true", D.harAktivSoegning({ ...base, aarFra: "1980" }) === true);
+check("harAktivSoegning: tom søgestreng = false", D.harAktivSoegning({ ...base, q: "   " }) === false);
+
 if (failures) {
   console.error(failures + " test fejlede");
   process.exit(1);

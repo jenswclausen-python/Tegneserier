@@ -6,6 +6,16 @@ Liste over mine tegneserier
 
 Åbn `index.html` i en browser — så vises dashboardet med søgning og filtre på titel, forfatter, serie, år, forlag og nummer i serie. Der skal ikke køres nogen server; siden læser data fra `comics-data.js`.
 
+## Indtastning og redigering i dashboardet
+
+Dashboardet kan også bruges til at tilføje, redigere og slette album direkte:
+
+- **+ Tilføj album** åbner en formular (titel er påkrævet; forfatter, serie, nummer, år, forlag, kommentar og "mangler" er valgfrie)
+- Hver række har **✎** (rediger) og **✕** (slet)
+- Ændringer gemmes i browserens `localStorage` oven på data fra Excel — Excel-filen ændres ikke
+- **⬇ Eksportér CSV** downloader hele den aktuelle liste (inkl. dine ændringer) som CSV med `;`-separator, klar til at kopiere ind i Excel
+- **Nulstil mine ændringer** fjerner alle localStorage-ændringer
+
 ## Filer
 
 - `index.html` — dashboardets side (UI)
@@ -13,6 +23,8 @@ Liste over mine tegneserier
 - `comics-data.js` — dine data, genereret fra Excel (genereret fil, rediger ikke manuelt)
 - `Tegneserier oversigt 2.xlsx` — din oprindelige Excel-liste (source of truth)
 - `scripts/xlsx_to_data.py` — konverterer Excel til `comics-data.js`
+- `scripts/test_dashboard.js` — logik-tests (køres af CI)
+- `.github/workflows/dashboard-check.yml` — CI: tjekker at `comics-data.js` er i sync med Excel, syntakstjekker `app.js` og kører tests
 
 ## Opdatér data
 

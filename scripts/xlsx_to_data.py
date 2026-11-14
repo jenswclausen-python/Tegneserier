@@ -2,6 +2,7 @@
 import argparse
 import datetime
 import json
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -119,6 +120,24 @@ def sheet_records(ws):
     return recs
 
 
+def flyt_samlebind(all_recs):
+    serier = {r["serie"] for r in all_recs if r["serie"]}
+    samlede_base = {}
+    for s in serier:
+        if "samlede" in s.lower():
+            for b in serier:
+                if b != s and len(b) < len(s) and s.lower().startswith(b.lower()):
+                    samlede_base.setdefault(b.lower(), s)
+    flyttet = 0
+    for r in all_recs:
+        if r["serie"] and r["titel"] and re.match(r"^den store\b", r["titel"], re.I):
+            target = samlede_base.get(r["serie"].lower())
+            if target and target != r["serie"]:
+                r["serie"] = target
+                flyttet += 1
+    return flyttet
+
+
 def merge(all_recs):
     merged = {}
     order = []
@@ -214,6 +233,7 @@ def main():
         per_sheet[name] = len(recs)
         all_recs.extend(recs)
 
+    flyttet = flyt_samlebind(all_recs)
     recs = merge(all_recs)
     recs, gaps_added = add_gaps(recs)
     recs = sort_recs(recs)
@@ -229,6 +249,7 @@ def main():
     print(f"Input: {xlsx}")
     for name, n in per_sheet.items():
         print(f"  ark '{name}': {n} rækker")
+    print(f"Samlebind (\"Den Store …\") flyttet til -samlede-serie: {flyttet}")
     print(f"Unikke album efter merge: {len(recs) - gaps_added}")
     print(f"Gul-markeringer (mangler): {yellow_count}")
     print(f"Huller i serier (tilføjede pladsholdere): {gaps_added}")

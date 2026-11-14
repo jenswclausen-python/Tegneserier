@@ -4,9 +4,9 @@ Liste over mine tegneserier
 
 ## Dashboard
 
-Åbn `dashboard.html` i en browser — filen er selvstændig (data og kode er indlejret), så den virker når som helst, også hvis du kun har den ene fil. Dashboardet har søgning (med Søg-knap og løbende filtrering) og filtre på titel, forfatter, serie, år, forlag og nummer i serie.
+Åbn **`index.html`** i en browser — filen er selvstændig (data og kode er indlejret), så den virker når som helst, også hvis du kun har den ene fil. Dashboardet har søgning (med Søg-knap og løbende filtrering) og filtre på titel, forfatter, serie, år, forlag og nummer i serie.
 
-Alternativt kan du åbne `index.html`, der læser `comics-data.js` og `app.js` som separate filer — de skal så ligge samme sted. `dashboard.html` bygges automatisk af `scripts/build_single.py` (CI tjekker at den er i sync).
+`index.html` er en genereret fil: den bygges af `scripts/build_single.py` ud fra skabelonen `template.html` + `comics-data.js` + `app.js` (CI tjekker, at den altid er i sync). Ret derfor i `template.html`/`app.js`, og kør `python3 scripts/build_single.py` bagefter.
 
 ## Indtastning og redigering i dashboardet
 
@@ -20,11 +20,13 @@ Dashboardet kan også bruges til at tilføje, redigere og slette album direkte:
 
 ## Filer
 
-- `index.html` — dashboardets side (UI)
+- `index.html` — dashboardet som selvstændig enkeltfil (genereret — åbn denne)
+- `template.html` — HTML-skabelon til `index.html` (ret i denne ved ændringer)
 - `app.js` — søgning, filtre, sortering og statistik (uden eksterne afhængigheder)
 - `comics-data.js` — dine data, genereret fra Excel (genereret fil, rediger ikke manuelt)
 - `Tegneserier oversigt 2.xlsx` — din oprindelige Excel-liste (source of truth)
 - `scripts/xlsx_to_data.py` — konverterer Excel til `comics-data.js`
+- `scripts/build_single.py` — bygger `index.html` fra `template.html` + data + kode
 - `scripts/test_dashboard.js` — logik-tests (køres af CI)
 - `.github/workflows/dashboard-check.yml` — CI: tjekker at `comics-data.js` er i sync med Excel, syntakstjekker `app.js` og kører tests
 

@@ -29,6 +29,19 @@ YELLOW = "FFFFFF00"
 HUL_MIN_OWNED = 3
 HUL_MIN_COVERAGE = 0.6
 
+SERIE_ALIAS = {
+    "agent 328": "Agent 327",
+    "agent 329": "Agent 327",
+    "agent 330": "Agent 327",
+    "agent 331": "Agent 327",
+    "agent 332": "Agent 327",
+    "agent 333": "Agent 327",
+}
+
+
+def normaliser_serie(s):
+    return SERIE_ALIAS.get(s.strip().lower(), s)
+
 
 def cell(row, j):
     return row[j] if j < len(row) else None
@@ -97,6 +110,7 @@ def sheet_records(ws):
             rec["forfatter"] = norm(cell(r, 3))
             notes = [n for n in notes if n != rec["forfatter"]]
         rec["note"] = " | ".join(dict.fromkeys(notes))
+        rec["serie"] = normaliser_serie(rec["serie"])
         rec["mangler"] = i in yellow
         rec["placeholder"] = False
         if not any(rec[f] for f in ("titel", "forfatter", "serie", "nummer")):

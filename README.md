@@ -49,3 +49,4 @@ Scriptet læser alle ark i Excel-filen, slår dubletter sammen (på forfatter + 
 
 - Rækker markeret med **gul** cellefarve i Excel læses som `mangler: true` — de vises med gul baggrund i tabellen og kan filtreres frem med "Kun manglende".
 - Scriptet finder også **huller i serier**: for hver serie med mindst 3 numre og mindst 60 % dækning af nummerintervallet tilføjes pladsholder-rækker (titel "(mangler)", kommentar "Mangler i serien") for de manglende numre. De er også omfattet af "Kun manglende"-filteret. Konstante `HUL_MIN_OWNED` og `HUL_MIN_COVERAGE` i scriptet styrer dette.
+- Serie-navne normaliseres via `SERIE_ALIAS` i scriptet (f.eks. "Agent 328"–"Agent 333" slås sammen til "Agent 327"), så varianter på tværs af ark ikke tæller som flere serier.

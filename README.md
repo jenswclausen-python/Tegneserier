@@ -4,7 +4,9 @@ Liste over mine tegneserier
 
 ## Dashboard
 
-Åbn `index.html` i en browser — så vises dashboardet med søgning og filtre på titel, forfatter, serie, år, forlag og nummer i serie. Der skal ikke køres nogen server; siden læser data fra `comics-data.js`.
+Åbn `dashboard.html` i en browser — filen er selvstændig (data og kode er indlejret), så den virker når som helst, også hvis du kun har den ene fil. Dashboardet har søgning (med Søg-knap og løbende filtrering) og filtre på titel, forfatter, serie, år, forlag og nummer i serie.
+
+Alternativt kan du åbne `index.html`, der læser `comics-data.js` og `app.js` som separate filer — de skal så ligge samme sted. `dashboard.html` bygges automatisk af `scripts/build_single.py` (CI tjekker at den er i sync).
 
 ## Indtastning og redigering i dashboardet
 

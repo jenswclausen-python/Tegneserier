@@ -24,6 +24,7 @@
       if (state.aarFra !== "" && state.aarFra !== null && (aar === null || aar < Number(state.aarFra))) return false;
       if (state.aarTil !== "" && state.aarTil !== null && (aar === null || aar > Number(state.aarTil))) return false;
       if (state.kunUlaest && txt(r.kommentar + " " + r.note).toLowerCase().indexOf("ikke læst") === -1) return false;
+      if (state.kunManglende && !r.mangler) return false;
       return true;
     });
   }
@@ -67,14 +68,15 @@
   function statistik(rows) {
     var aar = rows.map(function (r) { return txt(r.aar) === "" ? null : Number(r.aar); }).filter(function (n) { return n !== null && !Number.isNaN(n); });
     return {
-      album: rows.length,
-      serier: unikke(rows, "serie").length,
-      forfattere: unikke(rows, "forfatter").length,
+      album: rows.filter(function (r) { return !r.placeholder; }).length,
+      serier: unikke(rows.filter(function (r) { return !r.placeholder; }), "serie").length,
+      forfattere: unikke(rows.filter(function (r) { return !r.placeholder; }), "forfatter").length,
       aarMin: aar.length ? Math.min.apply(null, aar) : null,
       aarMax: aar.length ? Math.max.apply(null, aar) : null,
       ikkeLaest: rows.filter(function (r) {
         return txt(r.kommentar + " " + r.note).toLowerCase().indexOf("ikke læst") !== -1;
       }).length,
+      mangler: rows.filter(function (r) { return r.mangler; }).length,
     };
   }
 
@@ -94,7 +96,7 @@
     { key: "forlag", label: "Forlag" },
     { key: "kommentar", label: "Kommentar" },
   ];
-  var state = { q: "", serie: "", forfatter: "", forlag: "", aarFra: "", aarTil: "", kunUlaest: false, sortKey: "forfatter", sortDir: "asc" };
+  var state = { q: "", serie: "", forfatter: "", forlag: "", aarFra: "", aarTil: "", kunUlaest: false, kunManglende: false, sortKey: "forfatter", sortDir: "asc" };
 
   function $(id) {
     return document.getElementById(id);
@@ -122,6 +124,7 @@
     state.aarFra = $("aar-fra").value;
     state.aarTil = $("aar-til").value;
     state.kunUlaest = $("kun-ulaest").checked;
+    state.kunManglende = $("kun-manglende").checked;
   }
 
   function opdaterSorteringsPile() {
@@ -143,6 +146,7 @@
     $("stat-forfattere").textContent = s.forfattere;
     $("stat-aar").textContent = s.aarMin === null ? "—" : s.aarMin + "–" + s.aarMax;
     $("stat-ulaest").textContent = s.ikkeLaest;
+    $("stat-mangler").textContent = s.mangler;
   }
 
   function renderTabel() {
@@ -152,6 +156,7 @@
     var frag = document.createDocumentFragment();
     fundne.forEach(function (r) {
       var tr = document.createElement("tr");
+      if (r.mangler) tr.className = "mangler-row";
       COLS.forEach(function (c) {
         var td = document.createElement("td");
         var v = txt(r[c.key]);
@@ -181,6 +186,7 @@
       $(id).addEventListener("input", render);
     });
     $("kun-ulaest").addEventListener("change", render);
+    $("kun-manglende").addEventListener("change", render);
     $("nulstil").addEventListener("click", function () {
       $("q").value = "";
       $("f-serie").value = "";
@@ -189,6 +195,7 @@
       $("aar-fra").value = "";
       $("aar-til").value = "";
       $("kun-ulaest").checked = false;
+      $("kun-manglende").checked = false;
       render();
     });
     document.querySelectorAll("#tabel thead th").forEach(function (th) {

@@ -100,6 +100,8 @@
   tbody td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--kant); vertical-align: top; }
   tbody tr:nth-child(even) { background: #fafbfc; }
   tbody tr:hover { background: var(--accent-lys); }
+  tbody tr.mangler-row { background: #fff3bf; }
+  tbody tr.mangler-row:hover { background: #ffe98a; }
   td.tal { text-align: right; white-space: nowrap; }
   #antal { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.85rem; }
   footer { padding: 1rem 1.5rem 2rem; color: var(--muted); font-size: 0.8rem; }
@@ -117,6 +119,7 @@
     <div class="stat"><div class="vaerdi" id="stat-forfattere">–</div><div class="etiket">Forfattere</div></div>
     <div class="stat"><div class="vaerdi" id="stat-aar">–</div><div class="etiket">Udgivelsesår</div></div>
     <div class="stat"><div class="vaerdi" id="stat-ulaest">–</div><div class="etiket">Ikke læst</div></div>
+    <div class="stat"><div class="vaerdi" id="stat-mangler">–</div><div class="etiket">Mangler</div></div>
   </section>
 
   <section class="styring">
@@ -147,6 +150,10 @@
     <div class="felt check-felt">
       <input type="checkbox" id="kun-ulaest">
       <label for="kun-ulaest">Kun ikke-læste</label>
+    </div>
+    <div class="felt check-felt">
+      <input type="checkbox" id="kun-manglende">
+      <label for="kun-manglende">Kun manglende (gult + huller i serier)</label>
     </div>
     <div class="felt">
       <button id="nulstil" type="button">Nulstil filtre</button>

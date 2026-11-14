@@ -13,6 +13,7 @@
     --muted: #6b7280;
     --accent: #2563eb;
     --accent-lys: #eff4ff;
+    --gul: #fff3bf;
   }
   * { box-sizing: border-box; }
   body {
@@ -31,7 +32,7 @@
   main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
   .stat-kort {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.75rem;
     margin-bottom: 1.25rem;
   }
@@ -68,6 +69,7 @@
   .felt-sog { grid-column: 1 / -1; }
   .check-felt { display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
   .check-felt label { font-size: 0.9rem; }
+  .knap-raekke { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
   button {
     padding: 0.5rem 1rem;
     border: 1px solid var(--kant);
@@ -77,6 +79,8 @@
     cursor: pointer;
   }
   button:hover { background: var(--accent-lys); border-color: var(--accent); }
+  button.primar { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primar:hover { background: #1d4fd7; }
   .tabel-wrap {
     background: var(--kort);
     border: 1px solid var(--kant);
@@ -95,22 +99,63 @@
     user-select: none;
     white-space: nowrap;
   }
-  thead th:hover { background: #dce7ff; }
+  thead th.handlinger-kol { cursor: default; }
+  thead th[data-key]:hover { background: #dce7ff; }
   thead th .pil { color: var(--accent); display: inline-block; width: 1em; }
   tbody td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--kant); vertical-align: top; }
   tbody tr:nth-child(even) { background: #fafbfc; }
   tbody tr:hover { background: var(--accent-lys); }
-  tbody tr.mangler-row { background: #fff3bf; }
+  tbody tr.mangler-row { background: var(--gul); }
   tbody tr.mangler-row:hover { background: #ffe98a; }
   td.tal { text-align: right; white-space: nowrap; }
+  td.handlinger { white-space: nowrap; }
+  .rad-knap { padding: 0.15rem 0.5rem; margin-right: 0.25rem; font-size: 0.85rem; }
   #antal { margin: 0.75rem 0 0; color: var(--muted); font-size: 0.85rem; }
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 20, 30, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 10;
+  }
+  .modal[hidden] { display: none; }
+  .modal-kort {
+    background: var(--kort);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  }
+  .modal-kort h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .form-grid .felt label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .form-grid .felt input[type="text"], .form-grid .felt input[type="number"] {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--kant);
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+  .form-grid .bred { grid-column: 1 / -1; }
+  .form-grid .check-felt { padding: 0; }
+  .form-knapper { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
   footer { padding: 1rem 1.5rem 2rem; color: var(--muted); font-size: 0.8rem; }
 </style>
 </head>
 <body>
 <header>
   <h1>Tegneserie-dashboard</h1>
-  <p>Oversigt over din tegneseriesamling — søg og filtrer på titel, forfatter, serie, år, forlag og nummer.</p>
+  <p>Oversigt over din tegneseriesamling — søg, filtrer, og tilføj/rediger album direkte her. Ændringer gemmes i browseren og kan eksporteres til CSV.</p>
 </header>
 <main>
   <section class="stat-kort">
@@ -155,8 +200,11 @@
       <input type="checkbox" id="kun-manglende">
       <label for="kun-manglende">Kun manglende (gult + huller i serier)</label>
     </div>
-    <div class="felt">
+    <div class="knap-raekke">
+      <button id="tilfoej" type="button" class="primar">+ Tilføj album</button>
+      <button id="eksport" type="button">⬇ Eksportér CSV</button>
       <button id="nulstil" type="button">Nulstil filtre</button>
+      <button id="nulstil-overlay" type="button">Nulstil mine ændringer</button>
     </div>
   </section>
 
@@ -171,6 +219,7 @@
           <th data-key="aar">År <span class="pil"></span></th>
           <th data-key="forlag">Forlag <span class="pil"></span></th>
           <th data-key="kommentar">Kommentar <span class="pil"></span></th>
+          <th class="handlinger-kol">Handlinger</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -178,7 +227,55 @@
   </section>
   <p id="antal"></p>
 </main>
-<footer>Data læses fra <code>comics-data.js</code> — genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>. Åbn <code>index.html</code> direkte i browseren.</footer>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-kort">
+    <h2 id="modal-titel">Tilføj album</h2>
+    <form id="album-form">
+      <input type="hidden" id="edit-id">
+      <div class="form-grid">
+        <div class="felt bred">
+          <label for="f-titel">Titel *</label>
+          <input type="text" id="f-titel" required placeholder="Albummets titel">
+        </div>
+        <div class="felt">
+          <label for="f-forfatter">Forfatter</label>
+          <input type="text" id="f-forfatter" placeholder="Efternavn, Fornavn">
+        </div>
+        <div class="felt">
+          <label for="f-serie">Serie</label>
+          <input type="text" id="f-serie" placeholder="F.eks. Asterix">
+        </div>
+        <div class="felt">
+          <label for="f-nummer">Nummer i serie</label>
+          <input type="text" id="f-nummer" placeholder="F.eks. 12">
+        </div>
+        <div class="felt">
+          <label for="f-aar">År</label>
+          <input type="number" id="f-aar" min="1800" max="2100" placeholder="F.eks. 1989">
+        </div>
+        <div class="felt">
+          <label for="f-forlag">Forlag</label>
+          <input type="text" id="f-forlag" placeholder="F.eks. Cobolt">
+        </div>
+        <div class="felt bred">
+          <label for="f-kommentar">Kommentar</label>
+          <input type="text" id="f-kommentar" placeholder="F.eks. ikke læst, x 2, ønsker…">
+        </div>
+        <div class="felt check-felt">
+          <input type="checkbox" id="f-mangler">
+          <label for="f-mangler">Mangler (vises gult)</label>
+        </div>
+      </div>
+      <div class="form-knapper">
+        <button type="button" id="annuller">Annuller</button>
+        <button type="submit" id="gem" class="primar">Gem</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer>Data læses fra <code>comics-data.js</code> (genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>). Tilføjelser/ændringer gemmes lokalt i browseren — brug "Eksportér CSV" for at få dem med tilbage i Excel. Åbn <code>index.html</code> direkte i browseren.</footer>
 <script src="comics-data.js"></script>
 <script src="app.js"></script>
 </body>

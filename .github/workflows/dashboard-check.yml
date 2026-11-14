@@ -1,0 +1,28 @@
+name: Dashboard check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install openpyxl
+      - name: Tjek at comics-data.js er i sync med Excel
+        run: |
+          python3 scripts/xlsx_to_data.py -o /tmp/comics-data.js
+          diff /tmp/comics-data.js comics-data.js
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntakstjek app.js
+        run: node --check app.js
+      - name: Kør dashboard-logiktests
+        run: node scripts/test_dashboard.js

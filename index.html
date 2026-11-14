@@ -30,9 +30,22 @@
   header h1 { margin: 0; font-size: 1.4rem; }
   header p { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem; }
   main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
-  .stat-kort {
+  .stat-linje {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    background: var(--kort);
+    border: 1px solid var(--kant);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .stat-linje b { color: var(--tekst); font-size: 0.95rem; margin-right: 0.15rem; }
+  .resultat-kort {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.75rem;
     margin-bottom: 1.25rem;
   }
@@ -40,9 +53,9 @@
     background: var(--kort);
     border: 1px solid var(--kant);
     border-radius: 10px;
-    padding: 0.8rem 1rem;
+    padding: 1rem 1.1rem;
   }
-  .stat .vaerdi { font-size: 1.5rem; font-weight: 700; }
+  .stat .vaerdi { font-size: 1.7rem; font-weight: 700; min-height: 1.7rem; }
   .stat .etiket { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
   .styring {
     background: var(--kort);
@@ -160,13 +173,22 @@
   <p>Oversigt over din tegneseriesamling — søg, filtrer, og tilføj/rediger album direkte her. Ændringer gemmes i browseren og kan eksporteres til CSV.</p>
 </header>
 <main>
-  <section class="stat-kort">
-    <div class="stat"><div class="vaerdi" id="stat-album">–</div><div class="etiket">Album i alt</div></div>
-    <div class="stat"><div class="vaerdi" id="stat-serier">–</div><div class="etiket">Serier</div></div>
-    <div class="stat"><div class="vaerdi" id="stat-forfattere">–</div><div class="etiket">Forfattere</div></div>
-    <div class="stat"><div class="vaerdi" id="stat-aar">–</div><div class="etiket">Udgivelsesår</div></div>
-    <div class="stat"><div class="vaerdi" id="stat-ulaest">–</div><div class="etiket">Ikke læst</div></div>
-    <div class="stat"><div class="vaerdi" id="stat-mangler">–</div><div class="etiket">Mangler</div></div>
+  <section class="stat-linje">
+    <span class="stat-punkt"><b id="stat-album">–</b> album</span>
+    <span class="stat-punkt"><b id="stat-serier">–</b> serier</span>
+    <span class="stat-punkt"><b id="stat-forfattere">–</b> forfattere</span>
+    <span class="stat-punkt"><b id="stat-aar">–</b> år</span>
+    <span class="stat-punkt"><b id="stat-ulaest">–</b> ikke læst</span>
+    <span class="stat-punkt"><b id="stat-mangler">–</b> mangler</span>
+  </section>
+
+  <section class="resultat-kort">
+    <div class="stat"><div class="vaerdi" id="res-album"></div><div class="etiket">Resultater</div></div>
+    <div class="stat"><div class="vaerdi" id="res-serier"></div><div class="etiket">Serier</div></div>
+    <div class="stat"><div class="vaerdi" id="res-forfattere"></div><div class="etiket">Forfattere</div></div>
+    <div class="stat"><div class="vaerdi" id="res-aar"></div><div class="etiket">År</div></div>
+    <div class="stat"><div class="vaerdi" id="res-ulaest"></div><div class="etiket">Ikke læst</div></div>
+    <div class="stat"><div class="vaerdi" id="res-mangler"></div><div class="etiket">Mangler</div></div>
   </section>
 
   <section class="styring">
@@ -369,6 +391,12 @@ window.TEGNESERIER = [{"titel": "Djævelens orgel", "forfatter": "", "serie": ""
     };
   }
 
+  function harAktivSoegning(state) {
+    var aarFra = state.aarFra !== "" && state.aarFra !== null && state.aarFra !== undefined;
+    var aarTil = state.aarTil !== "" && state.aarTil !== null && state.aarTil !== undefined;
+    return !!(txt(state.q).trim() || state.serie || state.forfatter || state.forlag || aarFra || aarTil || state.kunUlaest || state.kunManglende);
+  }
+
   var OVERLAY_KEY = "tegneserier-overlay-v1";
 
   function tomtOverlay() {
@@ -419,7 +447,7 @@ window.TEGNESERIER = [{"titel": "Djævelens orgel", "forfatter": "", "serie": ""
     return head.join(";") + "\n" + rows.map(function (r) { return head.map(function (h) { return esc(r[h]); }).join(";"); }).join("\n");
   }
 
-  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, OVERLAY_KEY: OVERLAY_KEY };
+  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, OVERLAY_KEY: OVERLAY_KEY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.Dashboard = api;
 
@@ -490,6 +518,17 @@ window.TEGNESERIER = [{"titel": "Djævelens orgel", "forfatter": "", "serie": ""
     $("stat-mangler").textContent = s.mangler;
   }
 
+  function renderResultater(fundne) {
+    var tom = !harAktivSoegning(state);
+    var s = statistik(fundne);
+    $("res-album").textContent = tom ? "" : String(fundne.length);
+    $("res-serier").textContent = tom ? "" : String(s.serier);
+    $("res-forfattere").textContent = tom ? "" : String(s.forfattere);
+    $("res-aar").textContent = tom ? "" : s.aarMin === null ? "—" : s.aarMin + "–" + s.aarMax;
+    $("res-ulaest").textContent = tom ? "" : String(s.ikkeLaest);
+    $("res-mangler").textContent = tom ? "" : String(s.mangler);
+  }
+
   function renderTabel() {
     var fundne = sorter(filtrer(DATA, state), state.sortKey, state.sortDir);
     var tbody = $("tbody");
@@ -529,6 +568,7 @@ window.TEGNESERIER = [{"titel": "Djævelens orgel", "forfatter": "", "serie": ""
     });
     tbody.appendChild(frag);
     $("antal").textContent = "Viser " + fundne.length + " af " + DATA.length + " album";
+    renderResultater(fundne);
   }
 
   function render() {

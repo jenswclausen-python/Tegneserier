@@ -8,6 +8,8 @@ Liste over mine tegneserier
 
 `index.html` er en genereret fil: den bygges af `scripts/build_single.py` ud fra skabelonen `template.html` + `comics-data.js` + `app.js` (CI tjekker, at den altid er i sync). Ret derfor i `template.html`/`app.js`, og kør `python3 scripts/build_single.py` bagefter.
 
+Øverst vises en smal linje med totals (album, serier, forfattere, år, ikke-læst, mangler). Under den vises større bokse med statistik for de **aktuelle søgeresultater** — de er tomme, så længe der ikke er søgt/filtreret.
+
 ## Indtastning og redigering i dashboardet
 
 Dashboardet kan også bruges til at tilføje, redigere og slette album direkte:

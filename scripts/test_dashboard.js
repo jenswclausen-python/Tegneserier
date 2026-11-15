@@ -74,6 +74,14 @@ check("manifest-ikoner findes på disk", man.icons.every((i) => fs.existsSync(pa
 check("sw.js findes", fs.existsSync(path.join(root, "sw.js")));
 check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker") && tpl.includes('register("sw.js")'));
 
+const csv = D.tilCsv(data.slice(0, 50));
+const parsed = D.parseCsv(csv);
+check("csv roundtrip: samme antal rækker", parsed.length === 50);
+check("csv roundtrip: felter matcher", parsed[0].titel === data[0].titel && parsed[0].serie === data[0].serie && parsed[0].aar === String(data[0].aar) && parsed[0].mangler === String(data[0].mangler));
+check("parseCsv: dansk header (år) mappes til aar", D.parseCsv("titel;år\nX;1989\n")[0].aar === "1989");
+check("api.php findes", fs.existsSync(path.join(root, "api.php")));
+check("template.html har import + api-token", tpl.includes('id="import"') && tpl.includes('id="api-token"'));
+
 if (failures) {
   console.error(failures + " test fejlede");
   process.exit(1);

@@ -137,7 +137,41 @@
     return head.join(";") + "\n" + rows.map(function (r) { return head.map(function (h) { return esc(r[h]); }).join(";"); }).join("\n");
   }
 
-  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, OVERLAY_KEY: OVERLAY_KEY };
+  function parseCsv(text) {
+    text = txt(text).replace(/^﻿/, "");
+    var firstLine = text.split(/\r?\n/, 1)[0] || "";
+    var sep = firstLine.indexOf(";") !== -1 ? ";" : ",";
+    var rows = [];
+    var cur = [];
+    var field = "";
+    var inQ = false;
+    for (var i = 0; i < text.length; i++) {
+      var ch = text[i];
+      if (inQ) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; } else { inQ = false; }
+        } else { field += ch; }
+      } else if (ch === '"') { inQ = true; }
+      else if (ch === sep) { cur.push(field); field = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        cur.push(field); field = "";
+        if (cur.length > 1 || cur[0] !== "") rows.push(cur);
+        cur = [];
+      } else { field += ch; }
+    }
+    if (field !== "" || cur.length) { cur.push(field); rows.push(cur); }
+    if (!rows.length) return [];
+    var alias = { "år": "aar", "aar": "aar", "nr": "nummer", "kommentarer": "kommentar" };
+    var head = rows[0].map(function (h) { return (alias[h.trim().toLowerCase()] || h.trim().toLowerCase()); });
+    return rows.slice(1).map(function (r) {
+      var o = {};
+      head.forEach(function (h, j) { o[h] = (r[j] || "").trim(); });
+      return o;
+    });
+  }
+
+  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, parseCsv: parseCsv, OVERLAY_KEY: OVERLAY_KEY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.Dashboard = api;
 
@@ -146,6 +180,8 @@
   var BASE = global.TEGNESERIER || [];
   var overlay = laesOverlay();
   var DATA = anvendOverlay(BASE, overlay);
+  var serverMode = false;
+  var TOKEN_KEY = "tegneserier-api-token";
   var COLS = [
     { key: "nummer", label: "Nr." },
     { key: "titel", label: "Titel" },
@@ -163,6 +199,73 @@
 
   function genberegn() {
     DATA = anvendOverlay(BASE, overlay);
+  }
+
+  function token() {
+    try { return typeof localStorage !== "undefined" ? (localStorage.getItem(TOKEN_KEY) || "") : ""; } catch (e) { return ""; }
+  }
+
+  function opdaterLagring() {
+    var el = $("lagring");
+    if (!el) return;
+    el.textContent = serverMode
+      ? "Lagring: server (api.php → data.json) — synkroniseret på tværs af browsere og enheder"
+      : "Lagring: lokal browser (localStorage) — brug CSV-eksport/import til at flytte data mellem enheder";
+  }
+
+  function loadServerData() {
+    if (typeof fetch === "undefined") return Promise.resolve(false);
+    return fetch("api.php", { headers: { "Authorization": "Bearer " + token() }, cache: "no-store" })
+      .then(function (resp) {
+        if (!resp.ok) return false;
+        return resp.json().then(function (arr) {
+          if (Array.isArray(arr) && arr.length) { BASE = arr; serverMode = true; genberegn(); return true; }
+          return false;
+        });
+      })
+      .catch(function () { return false; });
+  }
+
+  function saveAll() {
+    if (!serverMode || typeof fetch === "undefined") return Promise.resolve(false);
+    return fetch("api.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token() },
+      body: JSON.stringify(DATA),
+    })
+      .then(function (resp) { return resp.ok ? resp.json().then(function (j) { return !!j.ok; }) : false; })
+      .catch(function () { return false; });
+  }
+
+  function gem() {
+    if (serverMode) {
+      saveAll().then(function (ok) {
+        if (ok) { overlay = tomtOverlay(); gemOverlay(overlay); }
+        genberegn(); opdaterLagring(); renderAlt();
+      });
+    } else {
+      gemOverlay(overlay); genberegn(); opdaterLagring(); renderAlt();
+    }
+  }
+
+  function importerCsv(fil) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      parseCsv(reader.result).forEach(function (r, i) {
+        var id = r.id && String(r.id).trim();
+        var rec = {
+          id: id && String(id).indexOf("ny-") === 0 ? id : "ny-imp-" + Date.now() + "-" + i,
+          titel: r.titel || "", forfatter: r.forfatter || "", serie: r.serie || "",
+          nummer: r.nummer || "", aar: r.aar || "", forlag: r.forlag || "",
+          kommentar: r.kommentar || "", note: r.note || "",
+          mangler: /^(true|1|ja)$/i.test(r.mangler || ""), placeholder: /^(true|1|ja)$/i.test(r.placeholder || ""),
+        };
+        var find = id ? DATA.find(function (x) { return String(x.id) === String(id); }) : null;
+        if (find) overlay.aendringer[id] = rec; else overlay.tilfoejelser.push(rec);
+      });
+      gem();
+    };
+    reader.readAsText(fil, "UTF-8");
   }
 
   function fyldSelect(el, values, alleLabel) {
@@ -320,9 +423,7 @@
     } else {
       overlay.aendringer[id] = Object.assign({}, overlay.aendringer[id], felter);
     }
-    gemOverlay(overlay);
-    genberegn();
-    renderAlt();
+    gem();
     lukModal();
   }
 
@@ -335,9 +436,7 @@
       overlay.slettede.push(id);
     }
     delete overlay.aendringer[id];
-    gemOverlay(overlay);
-    genberegn();
-    renderAlt();
+    gem();
   }
 
   function eksporterCsv() {
@@ -356,9 +455,17 @@
     $("eksport").addEventListener("click", eksporterCsv);
     $("nulstil-overlay").addEventListener("click", function () {
       overlay = tomtOverlay();
-      gemOverlay(overlay);
-      genberegn();
-      renderAlt();
+      gem();
+    });
+    $("import").addEventListener("click", function () { $("import-fil").click(); });
+    $("import-fil").addEventListener("change", function (e) {
+      if (e.target.files && e.target.files[0]) importerCsv(e.target.files[0]);
+      e.target.value = "";
+    });
+    $("api-token").value = token();
+    $("api-token").addEventListener("input", function () {
+      try { if (typeof localStorage !== "undefined") localStorage.setItem(TOKEN_KEY, $("api-token").value); } catch (err) {}
+      loadServerData().then(function () { opdaterLagring(); renderAlt(); });
     });
     $("album-form").addEventListener("submit", gemFraFormular);
     $("annuller").addEventListener("click", lukModal);
@@ -405,7 +512,8 @@
         render();
       });
     });
-    renderAlt();
+    opdaterLagring();
+    loadServerData().then(function () { opdaterLagring(); renderAlt(); });
   }
 
   if (document.readyState === "loading") {

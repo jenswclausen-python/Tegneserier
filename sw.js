@@ -1,6 +1,6 @@
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "tegneserier-" + VERSION;
-const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const ASSETS = ["./index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -17,6 +17,23 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (e.request.method !== "GET") return;
+  // HTML-sider: net først (så opdateringer slår igennem med det samme), cache som fallback
+  if (e.request.mode === "navigate" || e.request.destination === "document") {
+    e.respondWith(
+      fetch(e.request)
+        .then((resp) => {
+          if (resp.ok) {
+            const copy = resp.clone();
+            caches.open(CACHE).then((c) => c.put(e.request, copy));
+          }
+          return resp;
+        })
+        .catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html")))
+    );
+    return;
+  }
+  // Øvrige assets (ikoner, manifest, sw.js): cache først, net som fallback
   e.respondWith(
     caches.match(e.request).then((cached) => {
       if (cached) return cached;

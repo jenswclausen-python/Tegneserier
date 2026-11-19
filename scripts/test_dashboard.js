@@ -82,6 +82,11 @@ check("parseCsv: dansk header (år) mappes til aar", D.parseCsv("titel;år\nX;19
 check("api.php findes", fs.existsSync(path.join(root, "api.php")));
 check("template.html har import + api-token", tpl.includes('id="import"') && tpl.includes('id="api-token"'));
 
+check("overlayTom: tomt overlay er tomt", D.overlayTom(D.tomtOverlay()) === true);
+const ov2 = D.tomtOverlay();
+ov2.tilfoejelser.push({ id: "ny-x", titel: "X" });
+check("overlayTom: tilføjelse gør overlay ikke-tomt", D.overlayTom(ov2) === false);
+
 if (failures) {
   console.error(failures + " test fejlede");
   process.exit(1);

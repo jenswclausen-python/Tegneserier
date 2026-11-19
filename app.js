@@ -171,7 +171,7 @@
     });
   }
 
-  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, parseCsv: parseCsv, OVERLAY_KEY: OVERLAY_KEY };
+  var api = { filtrer: filtrer, sorter: sorter, unikke: unikke, statistik: statistik, soegeTekst: soegeTekst, txt: txt, harAktivSoegning: harAktivSoegning, tomtOverlay: tomtOverlay, laesOverlay: laesOverlay, gemOverlay: gemOverlay, anvendOverlay: anvendOverlay, tilCsv: tilCsv, parseCsv: parseCsv, overlayTom: function (o) { return !o.tilfoejelser.length && !Object.keys(o.aendringer).length && !o.slettede.length; }, OVERLAY_KEY: OVERLAY_KEY };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   global.Dashboard = api;
 
@@ -182,6 +182,7 @@
   var DATA = anvendOverlay(BASE, overlay);
   var serverMode = false;
   var TOKEN_KEY = "tegneserier-api-token";
+  var LAST_KEY = "tegneserier-last-saved";
   var COLS = [
     { key: "nummer", label: "Nr." },
     { key: "titel", label: "Titel" },
@@ -205,12 +206,28 @@
     try { return typeof localStorage !== "undefined" ? (localStorage.getItem(TOKEN_KEY) || "") : ""; } catch (e) { return ""; }
   }
 
+  function overlayTom() {
+    return !overlay.tilfoejelser.length && !Object.keys(overlay.aendringer).length && !overlay.slettede.length;
+  }
+
+  function antalPending() {
+    return overlay.tilfoejelser.length + Object.keys(overlay.aendringer).length + overlay.slettede.length;
+  }
+
+  function lastSaved() {
+    try { return typeof localStorage !== "undefined" ? localStorage.getItem(LAST_KEY) : null; } catch (e) { return null; }
+  }
+
   function opdaterLagring() {
     var el = $("lagring");
     if (!el) return;
-    el.textContent = serverMode
-      ? "Lagring: server (api.php → data.json) — synkroniseret på tværs af browsere og enheder"
-      : "Lagring: lokal browser (localStorage) — brug CSV-eksport/import til at flytte data mellem enheder";
+    if (serverMode) {
+      el.textContent = overlayTom()
+        ? "Lagring: server (api.php → data.json) — synkroniseret ✓" + (lastSaved() ? " kl. " + lastSaved() : "") + " — samme data i alle browsere"
+        : "Lagring: server (api.php → data.json) — afventer synkronisering ⏳ (" + antalPending() + " ændringer ligger lokalt)";
+    } else {
+      el.textContent = "Lagring: lokal browser (localStorage) — brug CSV-eksport/import til at flytte data mellem enheder";
+    }
   }
 
   function loadServerData() {
@@ -237,12 +254,24 @@
       .catch(function () { return false; });
   }
 
+  function syncPending() {
+    if (!serverMode || overlayTom() || typeof fetch === "undefined") return Promise.resolve(false);
+    genberegn();
+    return saveAll().then(function (ok) {
+      if (ok) {
+        BASE = DATA;
+        overlay = tomtOverlay();
+        gemOverlay(overlay);
+        try { if (typeof localStorage !== "undefined") localStorage.setItem(LAST_KEY, new Date().toLocaleTimeString("da-DK")); } catch (e) {}
+      }
+      genberegn(); opdaterLagring(); renderAlt();
+      return ok;
+    });
+  }
+
   function gem() {
     if (serverMode) {
-      saveAll().then(function (ok) {
-        if (ok) { overlay = tomtOverlay(); gemOverlay(overlay); }
-        genberegn(); opdaterLagring(); renderAlt();
-      });
+      syncPending();
     } else {
       gemOverlay(overlay); genberegn(); opdaterLagring(); renderAlt();
     }
@@ -513,7 +542,15 @@
       });
     });
     opdaterLagring();
-    loadServerData().then(function () { opdaterLagring(); renderAlt(); });
+    loadServerData().then(function () {
+      opdaterLagring();
+      if (serverMode) {
+        window.addEventListener("online", function () { syncPending(); });
+        syncPending().then(function () { renderAlt(); });
+      } else {
+        renderAlt();
+      }
+    });
   }
 
   if (document.readyState === "loading") {

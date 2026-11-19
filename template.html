@@ -88,6 +88,8 @@
   .check-felt { display: flex; align-items: center; gap: 0.5rem; padding-bottom: 0.45rem; }
   .check-felt label { font-size: 0.9rem; }
   .knap-raekke { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .felt-token { grid-column: 1 / -1; max-width: 420px; }
+  .lagring { margin: -0.6rem 0 1rem; color: var(--muted); font-size: 0.8rem; }
   button {
     padding: 0.5rem 1rem;
     border: 1px solid var(--kant);
@@ -233,10 +235,17 @@
     <div class="knap-raekke">
       <button id="tilfoej" type="button" class="primar">+ Tilføj album</button>
       <button id="eksport" type="button">⬇ Eksportér CSV</button>
+      <button id="import" type="button">⬆ Importér CSV</button>
+      <input type="file" id="import-fil" accept=".csv,text/csv" hidden>
       <button id="nulstil" type="button">Nulstil filtre</button>
       <button id="nulstil-overlay" type="button">Nulstil mine ændringer</button>
     </div>
+    <div class="felt felt-token">
+      <label for="api-token">API-token (kun ved egen hosting — gemmes kun i denne browser)</label>
+      <input type="password" id="api-token" autocomplete="off" placeholder="Bearer-token til api.php">
+    </div>
   </section>
+  <p id="lagring" class="lagring"></p>
 
   <section class="tabel-wrap">
     <table id="tabel">

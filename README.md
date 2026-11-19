@@ -10,6 +10,33 @@ Liste over mine tegneserier
 
 Øverst vises en smal linje med totals (album, serier, forfattere, år, ikke-læst, mangler). Under den vises større bokse med statistik for de **aktuelle søgeresultater** — de er tomme, så længe der ikke er søgt/filtreret.
 
+## Egen hosting: data gemmes på serveren (uagtet browser)
+
+Dashboardet tjekker ved load om der findes en `api.php` samme sted (din egen hjemmeside):
+
+- **GET `api.php`** → returnerer `data.json` (hele datasættet) — bruges som data-kilde, så alle browsere/enheder ser samme liste
+- **POST `api.php`** (JSON-body = hele datasættet, header `Authorization: Bearer <token>`) → skriver `data.json`
+
+På GitHub Pages findes `api.php` ikke, så dashboardet falder automatisk tilbage til localStorage (+ CSV-eksport/import).
+
+Opsætning på egen host (f.eks. et webhotel med PHP):
+
+```bash
+cp api.php index.html manifest.webmanifest sw.js icon-192.png icon-512.png /din/mappe/
+python3 scripts/export_json.py        # laver data.json ud fra comics-data.js
+echo "dit-hemmelige-token" > api-secret.txt   # vælg et langt tilfældigt token
+```
+
+Beskyt token-filen, f.eks. via `.htaccess` i samme mappe:
+
+```
+<Files "api-secret.txt">
+  Require all denied
+</Files>
+```
+
+I dashboardet sættes token i feltet "API-token" (gemmes kun i browserens localStorage, aldrig i repoet). Status-linjen under knapperne viser om der gemmes på server eller lokalt — i server-tilstand vises "synkroniseret ✓ kl. …" eller "afventer synkronisering ⏳ (N ændringer lokalt)". Ændringer lavet offline gemmes lokalt og synkroniseres automatisk, når der igen er net (eller ved næste load). Bemærk: ved samtidige redigeringer fra flere enheder vinder seneste gemte datasæt (last-write-wins). `scripts/export_json.py` konverterer `comics-data.js` til `data.json`.
+
 ## Indtastning og redigering i dashboardet
 
 Dashboardet kan også bruges til at tilføje, redigere og slette album direkte:

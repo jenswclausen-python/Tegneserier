@@ -181,6 +181,7 @@
   var overlay = laesOverlay();
   var DATA = anvendOverlay(BASE, overlay);
   var serverMode = false;
+  var sidstServerJson = "";
   var TOKEN_KEY = "tegneserier-api-token";
   var LAST_KEY = "tegneserier-last-saved";
   var COLS = [
@@ -223,24 +224,49 @@
     if (!el) return;
     if (serverMode) {
       el.textContent = overlayTom()
-        ? "Lagring: server (api.php → data.json) — synkroniseret ✓" + (lastSaved() ? " kl. " + lastSaved() : "") + " — samme data i alle browsere"
+        ? "Lagring: server (api.php → data.json) — synkroniseret ✓" + (lastSaved() ? " kl. " + lastSaved() : "") + " — samme data i alle browsere (auto-opdatering hver 30. sek)"
         : "Lagring: server (api.php → data.json) — afventer synkronisering ⏳ (" + antalPending() + " ændringer ligger lokalt)";
     } else {
       el.textContent = "Lagring: lokal browser (localStorage) — brug CSV-eksport/import til at flytte data mellem enheder";
     }
   }
 
-  function loadServerData() {
-    if (typeof fetch === "undefined") return Promise.resolve(false);
+  function hentServerData() {
+    if (typeof fetch === "undefined") return Promise.resolve(null);
     return fetch("api.php", { headers: { "Authorization": "Bearer " + token() }, cache: "no-store" })
       .then(function (resp) {
-        if (!resp.ok) return false;
-        return resp.json().then(function (arr) {
-          if (Array.isArray(arr) && arr.length) { BASE = arr; serverMode = true; genberegn(); return true; }
-          return false;
-        });
+        if (!resp.ok) return null;
+        return resp.json().catch(function () { return null; });
       })
-      .catch(function () { return false; });
+      .catch(function () { return null; });
+  }
+
+  function loadServerData() {
+    return hentServerData().then(function (arr) {
+      if (Array.isArray(arr) && arr.length) {
+        serverMode = true;
+        sidstServerJson = JSON.stringify(arr);
+        BASE = arr;
+        genberegn();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function pollServer() {
+    if (!serverMode) return;
+    hentServerData().then(function (arr) {
+      if (!Array.isArray(arr) || !arr.length) return;
+      var json = JSON.stringify(arr);
+      if (json !== sidstServerJson) {
+        sidstServerJson = json;
+        BASE = arr;
+        genberegn();
+        if ($("modal").hidden) renderAlt();
+        opdaterLagring();
+      }
+    });
   }
 
   function saveAll() {
@@ -541,11 +567,17 @@
         render();
       });
     });
+    $("genindlaes").addEventListener("click", function () {
+      loadServerData().then(function () { pollServer(); opdaterLagring(); renderAlt(); });
+    });
     opdaterLagring();
     loadServerData().then(function () {
       opdaterLagring();
       if (serverMode) {
-        window.addEventListener("online", function () { syncPending(); });
+        window.addEventListener("online", function () { syncPending(); pollServer(); });
+        window.addEventListener("focus", pollServer);
+        document.addEventListener("visibilitychange", function () { if (!document.hidden) pollServer(); });
+        setInterval(pollServer, 30000);
         syncPending().then(function () { renderAlt(); });
       } else {
         renderAlt();

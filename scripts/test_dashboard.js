@@ -72,6 +72,9 @@ const man = JSON.parse(fs.readFileSync(path.join(root, "manifest.webmanifest"), 
 check("manifest: standalone med >=2 ikoner", man.display === "standalone" && man.icons.length >= 2);
 check("manifest-ikoner findes på disk", man.icons.every((i) => fs.existsSync(path.join(root, i.src))));
 check("sw.js findes", fs.existsSync(path.join(root, "sw.js")));
+const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+check("sw.js: net-først for HTML-navigationer (opdateringer slår igennem)", sw.includes('mode === "navigate"') && sw.includes("fetch(e.request)"));
+check("sw.js: cache-version bumped (v2)", sw.includes('VERSION = "v2"'));
 check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker") && tpl.includes('register("sw.js")'));
 
 const csv = D.tilCsv(data.slice(0, 50));

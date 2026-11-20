@@ -84,6 +84,7 @@ check("csv roundtrip: felter matcher", parsed[0].titel === data[0].titel && pars
 check("parseCsv: dansk header (år) mappes til aar", D.parseCsv("titel;år\nX;1989\n")[0].aar === "1989");
 check("api.php findes", fs.existsSync(path.join(root, "api.php")));
 check("template.html har import + api-token", tpl.includes('id="import"') && tpl.includes('id="api-token"'));
+check("template.html har Genindlæs-knap (live-sync)", tpl.includes('id="genindlaes"'));
 
 check("overlayTom: tomt overlay er tomt", D.overlayTom(D.tomtOverlay()) === true);
 const ov2 = D.tomtOverlay();

@@ -27,13 +27,23 @@ python3 scripts/export_json.py        # laver data.json ud fra comics-data.js
 echo "dit-hemmelige-token" > api-secret.txt   # vælg et langt tilfældigt token
 ```
 
-Beskyt token-filen, f.eks. via `.htaccess` i samme mappe:
+Beskyt token-filen via `.htaccess` i samme mappe — repoet indeholder allerede en færdig `.htaccess`, som også sætter `no-store` på `sw.js` (så browserens HTTP-cache ikke hænger på en gammel service worker) og `no-cache` på `data.json`:
 
+```bash
+cp .htaccess api.php index.html manifest.webmanifest sw.js icon-192.png icon-512.png data.json api-secret.txt /din/mappe/
 ```
-<Files "api-secret.txt">
-  Require all denied
-</Files>
-```
+
+**Deployment-tjekliste ved opdatering på egen host:**
+
+1. Upload (overskriv) `index.html`, `sw.js`, `.htaccess`, `manifest.webmanifest`, ikonerne — og `data.json` kun hvis du har ændret i Excel-data.
+2. I hver browser/enhed én gang: fjern den gamle service worker, så den ikke serverer gammel kode:
+   - Firefox desktop: `about:serviceworkers` → **Unregister** for `jwclausen.dk` → luk ALLE faner med sitet → åbn `https://jwclausen.dk/tegneserier-app/` igen (Ctrl+Shift+R).
+   - Virker det ikke, eller på telefon: upload i stedet til en **ny mappe** (f.eks. `/tegneserier-app-v2/`) og brug den URL — nyt scope = helt frisk service worker. localStorage følger med, fordi det er samme origin.
+3. Tjek nederst i siden (footer, højre side): der skal stå versions-badgen, f.eks. `v3.1 · sw v3`. Står der noget ældre, ser du stadig en cachet side.
+4. Sæt token i **API-token**-feltet lige under søgefeltet. Status-linjen skifter til `Lagring: server (api.php → data.json) — synkroniseret ✓ kl. …`.
+5. Test: tilføj et album på telefonen → inden for 30 sek. (auto-poll) eller ved klik på **↻ Genindlæs** dukker det op i browseren på computeren.
+
+ Bemærk: `sw.js?v=N` i `index.html` og `VERSION` i `sw.js` skal altid følges ad (der er en test i `scripts/test_dashboard.js`, der fejler hvis de afviger).
 
 I dashboardet sættes token i feltet "API-token" (gemmes kun i browserens localStorage, aldrig i repoet). Status-linjen under knapperne viser om der gemmes på server eller lokalt — i server-tilstand vises "synkroniseret ✓ kl. …" eller "afventer synkronisering ⏳ (N ændringer lokalt)". Ændringer lavet offline gemmes lokalt og synkroniseres automatisk, når der igen er net (eller ved næste load). Bemærk: ved samtidige redigeringer fra flere enheder vinder seneste gemte datasæt (last-write-wins). `scripts/export_json.py` konverterer `comics-data.js` til `data.json`.
 

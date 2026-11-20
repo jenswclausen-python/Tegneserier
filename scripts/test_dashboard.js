@@ -74,8 +74,17 @@ check("manifest-ikoner findes på disk", man.icons.every((i) => fs.existsSync(pa
 check("sw.js findes", fs.existsSync(path.join(root, "sw.js")));
 const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
 check("sw.js: net-først for HTML-navigationer (opdateringer slår igennem)", sw.includes('mode === "navigate"') && sw.includes("fetch(e.request)"));
-check("sw.js: cache-version bumped (v2)", sw.includes('VERSION = "v2"'));
-check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker") && tpl.includes('register("sw.js")'));
+const swVer = (sw.match(/VERSION = "v(\d+)"/) || [])[1];
+check("sw.js: VERSION findes", !!swVer);
+check("sw.js: no-store på HTML-navigationer (HTTP-cache må ikke serve gammel index.html)", sw.includes('cache: "no-store"'));
+check("sw.js: skipWaiting + clients.claim (ny sw overtager med det samme)", sw.includes("skipWaiting()") && sw.includes("clients.claim()"));
+check("template.html: sw-registrering cache-bustet (?v=N) og matcher sw.js VERSION", !!swVer && tpl.includes('register("sw.js?v=' + swVer + '")'));
+check("template.html: versionsbadge i footer viser sw-version", !!swVer && tpl.includes("sw v" + swVer));
+check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker"));
+check("template.html: api-token-felt ligger øverst i styringsboksen (før knap-rækken)", tpl.indexOf('class="felt felt-token"') !== -1 && tpl.indexOf('class="felt felt-token"') < tpl.indexOf('class="knap-raekke"'));
+const ht = fs.existsSync(path.join(root, ".htaccess")) ? fs.readFileSync(path.join(root, ".htaccess"), "utf8") : "";
+check(".htaccess: beskytter api-secret.txt", ht.includes('Files "api-secret.txt"') && ht.includes("denied"));
+check(".htaccess: no-store på sw.js (så HTTP-cache ikke hænger på gammel sw)", /FilesMatch[^>]*sw\\\.js[\s\S]*no-store/.test(ht));
 
 const csv = D.tilCsv(data.slice(0, 50));
 const parsed = D.parseCsv(csv);

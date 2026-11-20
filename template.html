@@ -72,7 +72,7 @@
     align-items: end;
   }
   .felt label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
-  .felt input[type="search"], .felt input[type="text"], .felt input[type="number"], .felt select {
+  .felt input[type="search"], .felt input[type="text"], .felt input[type="number"], .felt input[type="password"], .felt select {
     width: 100%;
     padding: 0.45rem 0.6rem;
     border: 1px solid var(--kant);
@@ -90,6 +90,7 @@
   .knap-raekke { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .felt-token { grid-column: 1 / -1; max-width: 420px; }
   .lagring { margin: -0.6rem 0 1rem; color: var(--muted); font-size: 0.8rem; }
+  #app-version { float: right; font-weight: 600; color: var(--accent); }
   button {
     padding: 0.5rem 1rem;
     border: 1px solid var(--kant);
@@ -204,6 +205,10 @@
         <button id="sog" type="button" class="primar">Søg</button>
       </div>
     </div>
+    <div class="felt felt-token">
+      <label for="api-token">API-token (kun ved egen hosting — gemmes kun i denne browser)</label>
+      <input type="password" id="api-token" autocomplete="off" placeholder="Bearer-token til api.php">
+    </div>
     <div class="felt">
       <label for="f-serie">Serie</label>
       <select id="f-serie"></select>
@@ -240,10 +245,6 @@
       <input type="file" id="import-fil" accept=".csv,text/csv" hidden>
       <button id="nulstil" type="button">Nulstil filtre</button>
       <button id="nulstil-overlay" type="button">Nulstil mine ændringer</button>
-    </div>
-    <div class="felt felt-token">
-      <label for="api-token">API-token (kun ved egen hosting — gemmes kun i denne browser)</label>
-      <input type="password" id="api-token" autocomplete="off" placeholder="Bearer-token til api.php">
     </div>
   </section>
   <p id="lagring" class="lagring"></p>
@@ -315,13 +316,15 @@
   </div>
 </div>
 
-<footer>Denne fil bygges af <code>scripts/build_single.py</code> fra <code>template.html</code> + <code>comics-data.js</code> (genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>). Tilføjelser/ændringer gemmes lokalt i browseren — brug "Eksportér CSV" for at få dem med tilbage i Excel.</footer>
+<footer>Denne fil bygges af <code>scripts/build_single.py</code> fra <code>template.html</code> + <code>comics-data.js</code> (genereret fra din Excel med <code>scripts/xlsx_to_data.py</code>). Findes der en <code>api.php</code> samme sted (egen hosting), gemmes ændringer på serveren i <code>data.json</code> — så ligger de ens i alle browsere. Ellers gemmes de lokalt i browseren; brug da "Eksportér CSV" for at få dem med tilbage i Excel. <span id="app-version">v3.1 · sw v3</span></footer>
 <script src="comics-data.js"></script>
 <script src="app.js"></script>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("sw.js");
+      // Husk at bumpe ?v= sammen med VERSION i sw.js ved ændringer —
+      // ellers kan browserens HTTP-cache serve den gamle sw.js og hænge på gammel kode
+      navigator.serviceWorker.register("sw.js?v=3");
     });
   }
 </script>

@@ -1,0 +1,21 @@
+# Upload denne fil sammen med api.php, index.html, sw.js, data.json osv.
+# (GitHub Pages ignorerer .htaccess — den har kun effekt på egen Apache-host.)
+
+# 1) API-hemmeligheden må aldrig kunne hentes udefra
+<Files "api-secret.txt">
+  Require all denied
+</Files>
+
+# 2) Service worker og manifest må ALDRIG caches af browserens HTTP-cache —
+#    ellers kan en browser hænge på en gammel sw.js (op til 24 t.) og vise gammel kode,
+#    selvom serveren er opdateret. ?v=N i index.html er et ekstra cache-bust.
+<IfModule mod_headers.c>
+  <FilesMatch "^(sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+  </FilesMatch>
+  # data.json skal altid hentes friskt (live-sync hver 30. sek)
+  <Files "data.json">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </Files>
+</IfModule>

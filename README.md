@@ -30,8 +30,15 @@ echo "dit-hemmelige-token" > api-secret.txt   # vælg et langt tilfældigt token
 Beskyt token-filen via `.htaccess` i samme mappe — repoet indeholder allerede en færdig `.htaccess`, som også sætter `no-store` på `sw.js` (så browserens HTTP-cache ikke hænger på en gammel service worker) og `no-cache` på `data.json`:
 
 ```bash
-cp .htaccess api.php index.html manifest.webmanifest sw.js icon-192.png icon-512.png data.json api-secret.txt /din/mappe/
+cp .htaccess api.php index.html manifest.webmanifest sw.js icon-192.png icon-512.png /din/mappe/
+python3 scripts/export_json.py        # laver data.json ud fra comics-data.js
 ```
+
+Token-filen `api-secret.txt` kan ligge i samme mappe (så beskyttes den af `.htaccess`) — **eller bedre én mappe over web-roden** (f.eks. uden for `public_html/`); `api.php` leder efter begge steder, og så kan filen slet ikke hentes via HTTP. Generer et token med f.eks. `python3 -c "import secrets; print(secrets.token_hex(24))"`.
+
+> **FileZilla-tip:** dotfiler som `.htaccess` vises ikke som standard. Aktivér *Server → Force showing hidden files* (vis skjulte filer), ellers bliver `.htaccess` ikke uploadet.
+
+> **Ved flytning til en ny mappe** (f.eks. `/tegneserier-app2/` for at slippe af med en gammel service worker): kopier også `data.json` og `api-secret.txt` med (gerne server-side i FileZilla), så data og token følger med. `localStorage` (token + lokale ændringer) følger automatisk med, fordi det kun afhænger af domænet, ikke mappen.
 
 **Deployment-tjekliste ved opdatering på egen host:**
 

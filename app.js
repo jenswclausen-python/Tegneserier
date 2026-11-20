@@ -182,6 +182,7 @@
   var DATA = anvendOverlay(BASE, overlay);
   var serverMode = false;
   var sidstServerJson = "";
+  var sidstServerStatus = 0;
   var TOKEN_KEY = "tegneserier-api-token";
   var LAST_KEY = "tegneserier-last-saved";
   var COLS = [
@@ -226,6 +227,8 @@
       el.textContent = overlayTom()
         ? "Lagring: server (api.php → data.json) — synkroniseret ✓" + (lastSaved() ? " kl. " + lastSaved() : "") + " — samme data i alle browsere (auto-opdatering hver 30. sek)"
         : "Lagring: server (api.php → data.json) — afventer synkronisering ⏳ (" + antalPending() + " ændringer ligger lokalt)";
+    } else if (token() && sidstServerStatus === 403) {
+      el.textContent = "Lagring: lokal browser (localStorage) — serveren afviste API-token (403) — tjek token-feltet ovenfor";
     } else {
       el.textContent = "Lagring: lokal browser (localStorage) — brug CSV-eksport/import til at flytte data mellem enheder";
     }
@@ -235,20 +238,37 @@
     if (typeof fetch === "undefined") return Promise.resolve(null);
     return fetch("api.php", { headers: { "Authorization": "Bearer " + token() }, cache: "no-store" })
       .then(function (resp) {
-        if (!resp.ok) return null;
-        return resp.json().catch(function () { return null; });
+        if (!resp.ok) return { status: resp.status, data: null };
+        return resp.json()
+          .then(function (arr) { return { status: resp.status, data: arr }; })
+          .catch(function () { return { status: resp.status, data: null }; });
       })
       .catch(function () { return null; });
   }
 
   function loadServerData() {
-    return hentServerData().then(function (arr) {
-      if (Array.isArray(arr) && arr.length) {
+    return hentServerData().then(function (res) {
+      if (!res) return false;
+      sidstServerStatus = res.status;
+      if (Array.isArray(res.data) && res.data.length) {
         serverMode = true;
-        sidstServerJson = JSON.stringify(arr);
-        BASE = arr;
+        sidstServerJson = JSON.stringify(res.data);
+        BASE = res.data;
         genberegn();
         return true;
+      }
+      // 404 = token er accepteret, men data.json findes endnu ikke:
+      // gå i server-tilstand og seed data.json med nuværende data (én gang).
+      if (res.status === 404 && token()) {
+        serverMode = true;
+        genberegn();
+        return saveAll().then(function (ok) {
+          if (ok) {
+            sidstServerJson = JSON.stringify(DATA);
+            try { if (typeof localStorage !== "undefined") localStorage.setItem(LAST_KEY, new Date().toLocaleTimeString("da-DK")); } catch (e) {}
+          }
+          return true;
+        });
       }
       return false;
     });
@@ -256,12 +276,12 @@
 
   function pollServer() {
     if (!serverMode) return;
-    hentServerData().then(function (arr) {
-      if (!Array.isArray(arr) || !arr.length) return;
-      var json = JSON.stringify(arr);
+    hentServerData().then(function (res) {
+      if (!res || !Array.isArray(res.data) || !res.data.length) return;
+      var json = JSON.stringify(res.data);
       if (json !== sidstServerJson) {
         sidstServerJson = json;
-        BASE = arr;
+        BASE = res.data;
         genberegn();
         if ($("modal").hidden) renderAlt();
         opdaterLagring();

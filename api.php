@@ -2,12 +2,13 @@
 // Reference-backend til Tegneserie-dashboard.
 // GET  -> returnerer data.json (hele datasættet)
 // POST -> skriver request-body (JSON-array) til data.json
-// Kræver api-secret.txt i samme mappe (én linje med token). Beskyt filen via .htaccess.
+// Kræver api-secret.txt (én linje med token) — enten i samme mappe (beskyt så filen via .htaccess)
+// eller, bedre, én mappe OVER web-roden (så den aldrig kan hentes via HTTP).
 // Hvis api-secret.txt mangler, afvises alle kald (sikkert default).
 header('Content-Type: application/json; charset=utf-8');
 
 $dir = __DIR__;
-$secretFile = $dir . '/api-secret.txt';
+$secretFile = is_file($dir . '/api-secret.txt') ? $dir . '/api-secret.txt' : $dir . '/../api-secret.txt';
 $dataFile = $dir . '/data.json';
 
 function fail($code, $msg) {
@@ -17,7 +18,7 @@ function fail($code, $msg) {
 }
 
 if (!is_file($secretFile)) {
-    fail(403, 'api-secret.txt mangler — opret den med et token, og beskyt den via .htaccess');
+    fail(403, 'api-secret.txt mangler — opret den med et token (i samme mappe eller én mappe over web-roden)');
 }
 $secret = trim(file_get_contents($secretFile));
 $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';

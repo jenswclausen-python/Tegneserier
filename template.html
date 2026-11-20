@@ -72,7 +72,7 @@
     align-items: end;
   }
   .felt label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
-  .felt input[type="search"], .felt input[type="text"], .felt input[type="number"], .felt select {
+  .felt input[type="search"], .felt input[type="text"], .felt input[type="number"], .felt input[type="password"], .felt select {
     width: 100%;
     padding: 0.45rem 0.6rem;
     border: 1px solid var(--kant);
@@ -204,6 +204,10 @@
         <button id="sog" type="button" class="primar">Søg</button>
       </div>
     </div>
+    <div class="felt felt-token">
+      <label for="api-token">API-token (kun ved egen hosting — gemmes kun i denne browser)</label>
+      <input type="password" id="api-token" autocomplete="off" placeholder="Bearer-token til api.php">
+    </div>
     <div class="felt">
       <label for="f-serie">Serie</label>
       <select id="f-serie"></select>
@@ -240,10 +244,6 @@
       <input type="file" id="import-fil" accept=".csv,text/csv" hidden>
       <button id="nulstil" type="button">Nulstil filtre</button>
       <button id="nulstil-overlay" type="button">Nulstil mine ændringer</button>
-    </div>
-    <div class="felt felt-token">
-      <label for="api-token">API-token (kun ved egen hosting — gemmes kun i denne browser)</label>
-      <input type="password" id="api-token" autocomplete="off" placeholder="Bearer-token til api.php">
     </div>
   </section>
   <p id="lagring" class="lagring"></p>

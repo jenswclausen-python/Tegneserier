@@ -1,4 +1,4 @@
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = "tegneserier-" + VERSION;
 const ASSETS = ["./index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
@@ -21,7 +21,7 @@ self.addEventListener("fetch", (e) => {
   // HTML-sider: net først (så opdateringer slår igennem med det samme), cache som fallback
   if (e.request.mode === "navigate" || e.request.destination === "document") {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: "no-store" })
         .then((resp) => {
           if (resp.ok) {
             const copy = resp.clone();

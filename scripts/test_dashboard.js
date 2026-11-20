@@ -74,7 +74,8 @@ check("manifest-ikoner findes på disk", man.icons.every((i) => fs.existsSync(pa
 check("sw.js findes", fs.existsSync(path.join(root, "sw.js")));
 const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
 check("sw.js: net-først for HTML-navigationer (opdateringer slår igennem)", sw.includes('mode === "navigate"') && sw.includes("fetch(e.request)"));
-check("sw.js: cache-version bumped (v2)", sw.includes('VERSION = "v2"'));
+check("sw.js: cache-version bumped (v3)", sw.includes('VERSION = "v3"'));
+check("sw.js: HTML-hentning omgår HTTP-cache (no-store)", sw.includes('{ cache: "no-store" }'));
 check("template.html: manifest-link + service worker-registrering", tpl.includes('rel="manifest"') && tpl.includes("serviceWorker") && tpl.includes('register("sw.js")'));
 
 const csv = D.tilCsv(data.slice(0, 50));

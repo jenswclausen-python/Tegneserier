@@ -38,6 +38,8 @@ Token-filen `api-secret.txt` kan ligge i samme mappe (så beskyttes den af `.hta
 
 > **FileZilla-tip:** dotfiler som `.htaccess` vises ikke som standard. Aktivér *Server → Force showing hidden files* (vis skjulte filer), ellers bliver `.htaccess` ikke uploadet.
 
+> **Privatliv:** uden `.htaccess` kan `data.json` læses af alle via `https://<domæne>/<mappe>/data.json`. Den medfølgende `.htaccess` afviser därfor direkte adgang til `data.json` — app'en går altid gennem `api.php` med token. Sørg også for, at `api-secret.txt` ligger uden for web-roden eller er beskyttet.
+
 > **Ved flytning til en ny mappe** (f.eks. `/tegneserier-app2/` for at slippe af med en gammel service worker): kopier også `data.json` og `api-secret.txt` med (gerne server-side i FileZilla), så data og token følger med. `localStorage` (token + lokale ændringer) følger automatisk med, fordi det kun afhænger af domænet, ikke mappen.
 
 **Deployment-tjekliste ved opdatering på egen host:**
@@ -51,6 +53,28 @@ Token-filen `api-secret.txt` kan ligge i samme mappe (så beskyttes den af `.hta
 5. Test: tilføj et album på telefonen → inden for 30 sek. (auto-poll) eller ved klik på **↻ Genindlæs** dukker det op i browseren på computeren.
 
  Bemærk: `sw.js?v=N` i `index.html` og `VERSION` i `sw.js` skal altid følges ad (der er en test i `scripts/test_dashboard.js`, der fejler hvis de afviger).
+
+### Omdirigering fra en gammel mappe (hvis app'en flyttes igen)
+
+Hvis gamle links, bookmarks og hjemmeskærmsikoner skal følge med, når app'en ligger i en ny mappe, så læg denne `index.html` i den **gamle** mappe (overskriver den gamle app):
+
+```html
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=/tegneserier-app2/">
+<link rel="canonical" href="https://jwclausen.dk/tegneserier-app2/">
+<title>Tegneserier</title>
+</head>
+<body>
+<p>Dashboardet er flyttet til <a href="/tegneserier-app2/">/tegneserier-app2/</a> — klik her hvis du ikke automatisk omdirigeres.</p>
+<script>location.replace("/tegneserier-app2/");</script>
+</body>
+</html>
+```
+
+Justér mål-mappen (`/tegneserier-app2/`) efter behov. Alternativt kan linket på hjemmesiden rettes direkte i CMS'et.
 
 I dashboardet sættes token i feltet "API-token" (gemmes kun i browserens localStorage, aldrig i repoet). Status-linjen under knapperne viser om der gemmes på server eller lokalt — i server-tilstand vises "synkroniseret ✓ kl. …" eller "afventer synkronisering ⏳ (N ændringer lokalt)". Ændringer lavet offline gemmes lokalt og synkroniseres automatisk, når der igen er net (eller ved næste load). Bemærk: ved samtidige redigeringer fra flere enheder vinder seneste gemte datasæt (last-write-wins). `scripts/export_json.py` konverterer `comics-data.js` til `data.json`.
 

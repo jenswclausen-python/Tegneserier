@@ -85,6 +85,7 @@ check("template.html: api-token-felt ligger øverst i styringsboksen (før knap-
 const ht = fs.existsSync(path.join(root, ".htaccess")) ? fs.readFileSync(path.join(root, ".htaccess"), "utf8") : "";
 check(".htaccess: beskytter api-secret.txt", ht.includes('Files "api-secret.txt"') && ht.includes("denied"));
 check(".htaccess: no-store på sw.js (så HTTP-cache ikke hænger på gammel sw)", /FilesMatch[^>]*sw\\\.js[\s\S]*no-store/.test(ht));
+check(".htaccess: data.json afvises ved direkte HTTP-adgang (kun via api.php med token)", ht.indexOf('<Files "data.json">') !== -1 && ht.indexOf("Require all denied", ht.indexOf('<Files "data.json">')) !== -1);
 
 const csv = D.tilCsv(data.slice(0, 50));
 const parsed = D.parseCsv(csv);

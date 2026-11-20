@@ -14,8 +14,11 @@
     Header set Cache-Control "no-cache, no-store, must-revalidate"
     Header set Pragma "no-cache"
   </FilesMatch>
-  # data.json skal altid hentes friskt (live-sync hver 30. sek)
+  # data.json må IKKE kunne læses direkte via HTTP (så ligger hele listen offentligt).
+  # App'en henter altid api.php (med token) — aldrig data.json direkte — så dette er sikkert.
+  # api.php læser filen server-side med file_get_contents(), upåvirket af HTTP-regler.
   <Files "data.json">
+    Require all denied
     Header set Cache-Control "no-cache, must-revalidate"
   </Files>
 </IfModule>
